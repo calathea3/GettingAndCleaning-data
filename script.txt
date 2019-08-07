@@ -1,0 +1,75 @@
+#Download and unpack zip file in working directory, load raw data in R
+
+Xtest <- read.table("X_test.txt", header = FALSE)
+Ytest <- read.table("Y_test.txt", header = FALSE)
+subjectstest <- read.table ("subject_test.txt", header = FALSE)
+
+Xtrain <- read.table("X_train.txt", header = FALSE)
+Ytrain <- read.table("Y_train.txt", header = FALSE)
+subjectstrain <- read.table ("subject_train.txt", header = FALSE)
+
+features <- read.table("features.txt", header = FALSE)
+activities <- read.table("activity_labels.txt", header = FALSE)
+
+#Change column names
+
+names(Xtest) <- features$V2
+names(Xtrain) <- features$V2
+
+names(Ytest) <- "activityCode"
+names(Ytrain) <- "activityCode"
+
+names(subjectstest) <- "subjectCode"
+names(subjectstrain) <- "subjectCode"
+
+names(activities) <- c("activityCode","activityName")
+
+#Make one dataset
+
+tmptest <- cbind(subjectstest, Ytest, Xtest)
+tmptest$segmentID <- seq.int(nrow(tmptest))
+tmptest$segment <- "test"
+
+tmptrain <- cbind(subjectstrain, Ytrain, Xtrain)
+tmptrain$segmentID <- seq.int(nrow(tmptrain))
+tmptrain$segment <- "train"
+
+tmp <- rbind(tmptrain, tmptest)
+tmp$ID <- seq.int(nrow(tmp))
+
+#Extract relevant measures (mean, sd)
+
+library(dplyr)
+
+table(grepl("mean",names(tmp)))
+table(grepl("std",names(tmp)))
+
+##get rid of duplicate columnnames first
+names_freq <- as.data.frame(table(names(tmp)))
+dupnames <- names_freq[names_freq$Freq > 1, ]$Var1
+nodupnames <- names(tmp)[!names(tmp) %in% dupnames]
+tmpclean <- subset(tmp, select = nodupnames)
+
+table(grepl("mean",names(tmpclean)))
+table(grepl("std",names(tmpclean)))
+
+tmpclean2 <- select(tmpclean, subjectCode,activityCode, grep("mean",names(tmpclean), value = TRUE), grep("std",names(tmpclean), value = TRUE), ID)
+
+#Use descriptive activity names
+
+tmpclean2 <- merge(tmpclean2, activities, by.x = "activityCode", by.y = "activityCode", all = TRUE)
+
+# Use descriptive variable names
+
+names(tmpclean2) <- sub("()","",names(tmpclean2),fixed = TRUE)
+names(tmpclean2) <- sub("tBody","timeBody",names(tmpclean2),fixed = TRUE)
+names(tmpclean2) <- sub("tGravity","timeGravity",names(tmpclean2),fixed = TRUE)
+names(tmpclean2) <- sub("fBody","frequBody",names(tmpclean2),fixed = TRUE)
+
+
+# Create tidy dataset
+
+tmpclean3 <- select(tmpclean2, subjectCode, activityName, 3:81)
+bysubjectactivity <- group_by(tmpclean3, subjectCode, activityName)
+tidydataset <- summarise_each(bysubjectactivity, mean, "timeBodyAcc-mean-X":"frequBodyBodyGyroJerkMag-std")
+write.csv(tidydataset, file="tidydataset.csv")
