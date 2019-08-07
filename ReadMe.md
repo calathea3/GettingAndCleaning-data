@@ -1,9 +1,3 @@
----
-title: "ReadMe"
-output: html_document
----
-
-
 # Intro
 Dear reader,
 
