@@ -1,10 +1,6 @@
 
 ---
-title: "Codebook Human Activity Recognition Using Smartphones Dataset"
-author: "Harriet Neijnens"
-date: "19.07.2019"
-output: html_document
-keep_md: yes
+# Codebook Human Activity Recognition Using Smartphones Dataset
 ---
 
 ## Project Description
